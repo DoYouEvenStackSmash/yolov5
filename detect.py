@@ -61,6 +61,10 @@ from pathlib import Path
 
 import torch
 
+# import rospy
+# # import time
+# from geometry_msgs.msg import Twist
+
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
@@ -74,7 +78,31 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
+POSE_ADJUST_FLAG = False
+POSE_TRANSLATE_ADJUST_FLAG = False
+POSE_ROTATE_ADJUST_FLAG = False
+
+def gen_twist(direction = None):
+    '''
+    Translates a direction to a movement command
+    '''
+    twist = Twist()
+    twist.linear.x = 0.0
+    twist.linear.y = 0.0
+    twist.linear.z = 0.0
+    twist.angular.x = 0.0
+    twist.angular.y = 0.0
+    twist.angular.z = 0.0
+    if direction == 'LEFT':
+        twist.angular.z = 0.5
+    elif direction == 'RIGHT':
+        twist.angular.z = -0.5
+    return twist
+
 def drive(origin, pt):
+  '''
+  prints a direction to turn
+  '''
   rad, r = mfn.car2pol(origin, pt)
   if rad < np.pi/2 and rad > -np.pi/2:
     print("turn right")
@@ -84,14 +112,19 @@ def drive(origin, pt):
     # pafn.frame_draw_bold_line(screen, (origin, pt), pafn.colors["red"])
 
 def normalize(rel_x, rel_y, abs_x_max = 1000):
-  # print(rel_x)
+  '''
+  Normalizes the coordinate system to x = [0,1000] and y = 500
+  '''
   rel_x = rel_x / 100 * abs_x_max 
   rel_y = 500
   return (rel_x, rel_y)
 
 
 def do_rel_detection(sensing_agent):
-  # pafn.clear_frame(screen)
+  '''
+  Perform a relative detection. DOES NOT ADJUST POSE
+  used for debugging
+  '''
   curr_pt, pred_pt = sensing_agent.estimate_rel_next_detection()
   print((curr_pt,pred_pt))
   if not len(pred_pt):
@@ -105,6 +138,9 @@ def do_rel_detection(sensing_agent):
       drive((500,500), pred_pt)
 
 def sa_setup():
+  '''
+  Initializes a sensing agent
+  '''
   sensing_agent = SensingAgent()
   ox,oy = 500,500
   scale = 2
@@ -152,6 +188,9 @@ def run(
         vid_stride=1,  # video frame-rate stride
 ):
     sensing_agent = sa_setup()
+    # rospy.init_node('jackal_velocity_controller')
+    # pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+
 
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -274,8 +313,41 @@ def run(
                 # if len(layer)
                 sensing_agent.obj_tracker.add_new_layer(layer)
                 sensing_agent.obj_tracker.process_layer(len(sensing_agent.obj_tracker.layers) - 1)
-                # print(f"layer {counter}")
+                
+                # generic debugging for agent detection and drive
+                # DOES NOT MODIFY STATE
                 do_rel_detection(sensing_agent)
+                
+                # relative rotation estimate
+                pred_rotation = sensing_agent.exoskeleton.get_relative_rotation(pt)
+                print(f"predicted(degrees): {pred_rotation * 180 / np.pi}\t",end="")
+
+                # agent FOV estimate
+                est_rotation,est_translation = sensing_agent.estimate_next_rotation()
+                
+                if est_rotation != None:
+                    print(f"estimated (degrees): {est_rotation * 180 / np.pi}")
+                    # perform rotation if needed
+                    if POSE_ROTATE_ADJUST_FLAG:
+                        ###
+                        # TODO ADD gen_twist
+                        ###
+                        rotation = sensing_agent.apply_rotation_to_agent(est_rotation)
+                        sensing_agent.obj_tracker.add_angular_displacement(0, -est_rotation)
+                        sensing_agent.exoskeleton.rel_theta += rotation
+
+                if est_translation != None:
+                    print(f"estimated translation {est_translation}")
+                    # perform translation if needed
+                    if POSE_TRANSLATE_ADJUST_FLAG:
+                        ###
+                        # TODO ADD gen_twist
+                        ###
+                        translation = sensing_agent.apply_translation_to_agent(est_translation)
+                        sensing_agent.obj_tracker.add_linear_displacement(-translation, 0)
+
+
+
                 counter += 1
             # Stream results
             im0 = annotator.result()
