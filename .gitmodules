@@ -1,0 +1,3 @@
+[submodule "simulation-environments"]
+	path = simulation-environments
+	url = https://github.com/DoYouEvenStackSmash/simulation-environments.git

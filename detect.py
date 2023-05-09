@@ -27,11 +27,36 @@ Usage - formats:
                                  yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
                                  yolov5s_paddle_model       # PaddlePaddle
 """
+import sys
+sys.path.insert(0, './simulation-environments/src')
+
+from render_support import PygameArtFxns as pafn
+from render_support import GeometryFxns as gfn
+from render_support import MathFxns as mfn
+from render_support import TransformFxns as tfn
+from support.transform_polygon import *
+from support.Polygon import *
+from support.Link import Link
+
+import collections
+# from aux_functions import *
+# from Dataloader import Dataloader
+from YoloBox import YoloBox
+from StreamingObjectTrackManager import ObjectTrackManager
+from ObjectTrack import ObjectTrack
+from AnnotationLoader import AnnotationLoader as al
+from OTFTrackerApi import StreamingAnnotations as sann
+from RigidBody import RigidBody
+from SensingAgent import SensingAgent
+from Sensor import Sensor
+from Target import Target
+from Environment import Environment
+import json
 
 import argparse
 import os
 import platform
-import sys
+# import sys
 from pathlib import Path
 
 import torch
@@ -48,6 +73,52 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
+
+def drive(origin, pt):
+  rad, r = mfn.car2pol(origin, pt)
+  if rad < np.pi/2 and rad > -np.pi/2:
+    print("turn right")
+    # pafn.frame_draw_bold_line(screen, (origin, pt), pafn.colors["green"])
+  else:
+    print("turn left")
+    # pafn.frame_draw_bold_line(screen, (origin, pt), pafn.colors["red"])
+
+def normalize(rel_x, rel_y, abs_x_max = 1000):
+  # print(rel_x)
+  rel_x = rel_x / 100 * abs_x_max 
+  rel_y = 500
+  return (rel_x, rel_y)
+
+
+def do_rel_detection(sensing_agent):
+  # pafn.clear_frame(screen)
+  curr_pt, pred_pt = sensing_agent.estimate_rel_next_detection()
+  print((curr_pt,pred_pt))
+  if not len(pred_pt):
+    return
+  if len(pred_pt):
+    prev_pt = [pred_pt[0],pred_pt[1]]
+    curr_pt = normalize(curr_pt[0],curr_pt[1])
+    pred_pt = normalize(pred_pt[0],pred_pt[1])
+    status, flags = sensing_agent.is_rel_detectable(prev_pt)
+    if flags == Sensor.ANGULAR:
+      drive((500,500), pred_pt)
+
+def sa_setup():
+  sensing_agent = SensingAgent()
+  ox,oy = 500,500
+  scale = 2
+  opts = [(ox - 10*scale, oy - 10*scale), (ox - 10*scale, oy + 10*scale), (ox + 30 * scale, oy)]
+  mpt = gfn.get_midpoint(opts[0], opts[1])
+  mpt2 = gfn.get_midpoint(mpt,opts[2])
+  ap = Polygon(opts)
+  rb = RigidBody(parent_agent=sensing_agent, ref_origin = mpt, ref_center = mpt2, endpoint = opts[2], rigid_link = ap)
+  sensor = Sensor(parent_agent = sensing_agent)
+  sensing_agent.exoskeleton = rb
+  sensing_agent.sensor = sensor
+  sensing_agent.obj_tracker = ObjectTrackManager()
+  sensing_agent.obj_tracker.parent_agent = sensing_agent
+  return sensing_agent
 
 
 @smart_inference_mode()
@@ -80,6 +151,8 @@ def run(
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
 ):
+    sensing_agent = sa_setup()
+
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -114,6 +187,8 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+    counter = 0
+    
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
@@ -160,12 +235,35 @@ def run(
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
                 # Write results
+                layer = []
+                abs_x_max = 1000
+                x_max = 100
+                counter += 1
                 for *xyxy, conf, cls in reversed(det):
-                    if save_txt:  # Write to file
+
+                        
+                    if True or save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
-                        with open(f'{txt_path}.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        dims = (('%g ' * len(line)).rstrip() % line).split()
+                        cls, x, y, w, h = dims
+                        xb = 1000
+                        yb = 1000
+                        x, w = float(x) * 1920, float(w) * 1920
+                        y, h = float(y) * 1080, float(h) * 1080
+                        origin = (1920/2, 1080/2)
+                        center = [x + w/2, y + h/2]
+                        center[0] = center[0] / 1920 * xb
+                        center[1] = center[1] / 1080 * yb
+                        # environ
+                        x = (center[0] / abs_x_max) * x_max
+                        y = 50
+                        pt = (x,y)
+                        bbox = [x,y,1,1]
+                        yb = sann.register_annotation(0,bbox, f"frame_{counter}")
+                        layer.append(yb)
+                        # with open(f'{txt_path}.txt', 'a') as f:
+                        #     f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
@@ -173,7 +271,12 @@ def run(
                         annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
-
+                # if len(layer)
+                sensing_agent.obj_tracker.add_new_layer(layer)
+                sensing_agent.obj_tracker.process_layer(len(sensing_agent.obj_tracker.layers) - 1)
+                # print(f"layer {counter}")
+                do_rel_detection(sensing_agent)
+                counter += 1
             # Stream results
             im0 = annotator.result()
             if view_img:
