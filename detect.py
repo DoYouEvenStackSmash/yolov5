@@ -99,10 +99,6 @@ from utils.general import (
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
-POSE_ADJUST_FLAG = False
-POSE_TRANSLATE_ADJUST_FLAG = False
-POSE_ROTATE_ADJUST_FLAG = False
-
 @smart_inference_mode()
 def run(
     weights=ROOT / "yolov5s.pt",  # model path or triton URL

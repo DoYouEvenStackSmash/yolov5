@@ -1,5 +1,10 @@
 # from geometry_msgs.msg import Twist
 from SensingAgent import *
+
+POSE_ADJUST_FLAG = False
+POSE_TRANSLATE_ADJUST_FLAG = False
+POSE_ROTATE_ADJUST_FLAG = False
+
 def gen_twist(direction=None):
     """
     Translates a direction to a movement command
