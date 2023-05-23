@@ -152,7 +152,7 @@ def init_sensing_agent(
 
 def create_conformal_yolobox(dims, sa_state_id, max_x=1920, max_y=1080):
     rel_max_x = 100
-    rel_fixed_y = 50
+    rel_fixed_y = 100
     cls, x, y, w, h = dims
     orig_x, orig_w = float(x) * max_x, float(w) * max_x
     orig_y, orig_h = float(y) * max_y, float(h) * max_y
