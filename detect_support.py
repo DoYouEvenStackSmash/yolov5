@@ -1,9 +1,11 @@
 # from geometry_msgs.msg import Twist
 from SensingAgent import *
+from drawing_functions import *
 
 POSE_ADJUST_FLAG = False
 POSE_TRANSLATE_ADJUST_FLAG = False
 POSE_ROTATE_ADJUST_FLAG = False
+
 
 def gen_twist(direction=None):
     """
@@ -89,6 +91,7 @@ def agent_update(sensing_agent):
 
     if est_rotation != None:
         print(f"estimated (degrees): {est_rotation * 180 / np.pi}")
+        return
         ###
         publish_rotation(est_rotation)
         get_odometry_update()
@@ -104,6 +107,7 @@ def agent_update(sensing_agent):
         ###
         translation = sensing_agent.apply_translation_to_agent(est_translation)
         sensing_agent.obj_tracker.add_linear_displacement(-translation, 0)
+
 
 def init_sensing_agent(
     sensing_agent=SensingAgent(), origin=(0, 0), _id=0, orientation=(0, 0)
@@ -160,3 +164,19 @@ def create_conformal_yolobox(dims, sa_state_id, max_x=1920, max_y=1080):
     conformal_yolobox = sann.register_annotation(0, bbox, sa_state_id)
     return conformal_yolobox
 
+
+def agent_action(sensing_agent, layer, screen=None):
+    sensing_agent.obj_tracker.add_new_layer(layer)
+    sensing_agent.obj_tracker.process_layer(-1)
+
+    agent_update(sensing_agent)
+    curr_pt, pred_pt = sensing_agent.estimate_next_detection()
+    if screen != None:
+        pafn.clear_frame(screen)
+        if len(pred_pt):
+            pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"])
+            pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"])
+            pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
+
+        draw_sensing_agent(screen, sensing_agent)
+        pygame.display.update()

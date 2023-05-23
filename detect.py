@@ -57,6 +57,7 @@ import argparse
 import os
 import platform
 from detect_support import *
+
 # import sys
 from pathlib import Path
 
@@ -99,6 +100,7 @@ from utils.general import (
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
+
 @smart_inference_mode()
 def run(
     weights=ROOT / "yolov5s.pt",  # model path or triton URL
@@ -130,6 +132,8 @@ def run(
     vid_stride=1,  # video frame-rate stride
 ):
     # sensing_agent = sa_setup()
+    screen = pafn.create_display(1000, 1000)
+    pafn.clear_frame(screen)
     identifier = "Agent_A"
     sensing_agent = init_sensing_agent(SensingAgent(), (500, 500), identifier)
     # rospy.init_node('jackal_velocity_controller')
@@ -274,11 +278,8 @@ def run(
                             file=save_dir / "crops" / names[c] / f"{p.stem}.jpg",
                             BGR=True,
                         )
+                agent_action(sensing_agent, layer, screen)
 
-                sensing_agent.obj_tracker.add_new_layer(layer)
-                sensing_agent.obj_tracker.process_layer(-1)
-
-                agent_update(sensing_agent)
                 # generic debugging for agent detection and drive
                 # DOES NOT MODIFY STATE
 
