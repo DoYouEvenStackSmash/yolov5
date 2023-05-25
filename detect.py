@@ -279,7 +279,6 @@ def run(
                             BGR=True,
                         )
                 agent_action(sensing_agent, layer, screen)
-
                 # generic debugging for agent detection and drive
                 # DOES NOT MODIFY STATE
 

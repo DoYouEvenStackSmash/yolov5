@@ -168,8 +168,9 @@ def create_conformal_yolobox(dims, sa_state_id, max_x=1920, max_y=1080):
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
     sensing_agent.obj_tracker.process_layer(-1)
-
-    agent_update(sensing_agent)
+    r,t = sensing_agent.tracker_query()
+    sensing_agent.reposition(r,t)
+    # agent_update(sensing_agent)
     curr_pt, pred_pt = sensing_agent.estimate_next_detection()
     if screen != None:
         pafn.clear_frame(screen)
