@@ -187,7 +187,7 @@ def create_conformal_local_detection(dims, sa_state_id, max_x=1920, max_y=1080):
 
     rel_fixed_x = 300
 
-    return (rel_fixed_x, rel_center_y)
+    return (50, rel_center_y)
 
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
