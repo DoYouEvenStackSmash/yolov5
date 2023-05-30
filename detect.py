@@ -45,7 +45,7 @@ from YoloBox import YoloBox
 from StreamingObjectTrackManager import ObjectTrackManager
 from ObjectTrack import ObjectTrack
 from AnnotationLoader import AnnotationLoader as al
-from OTFTrackerApi import StreamingAnnotations as sann
+from StreamingAnnotations import StreamingAnnotations as sann
 from RigidBody import RigidBody
 from SensingAgent import SensingAgent
 from Sensor import Sensor
@@ -257,7 +257,8 @@ def run(
                             (cls, *xywh, conf) if save_conf else (cls, *xywh)
                         )  # label format
                         dims = (("%g " * len(line)).rstrip() % line).split()
-                        layer.append(create_conformal_yolobox(dims, curr_state))
+                        
+                        layer.append(mock_coordinate_transform(sensing_agent, dims, curr_state))
                         # cls, x, y, w, h = dims
 
                         # # with open(f'{txt_path}.txt', 'a') as f:

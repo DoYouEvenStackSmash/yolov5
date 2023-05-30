@@ -136,7 +136,7 @@ def init_sensing_agent(
 
     sensing_agent.exoskeleton = rb
     sensing_agent.exoskeleton.states = []
-
+    sensor.fov_radius = 500
     sensing_agent.centered_sensor = sensor
     sensing_agent.obj_tracker = ObjectTrackManager()
     sensing_agent.obj_tracker.linked_tracks = []
@@ -161,9 +161,33 @@ def create_conformal_yolobox(dims, sa_state_id, max_x=1920, max_y=1080):
 
     rel_center_x = (orig_center_x / max_x) * 100
     bbox = [rel_center_x, rel_fixed_y, 1, 1]
+    
     conformal_yolobox = sann.register_annotation(0, bbox, sa_state_id)
     return conformal_yolobox
 
+def mock_coordinate_transform(sensing_agent, dims, sa_state_id, max_x=1920, max_y=1080):
+    val = create_conformal_local_detection(dims, sa_state_id)
+   
+    dc = sensing_agent.transform_to_local_sensor_coord((0, 0), (val[0], val[1]))
+    
+    bbox = [dc[0], dc[1], 1, 1]
+    yb = sann.register_annotation(dims[0], bbox, sa_state_id)
+    posn = Position(val[0], val[1])
+    return Detection(posn, yb)
+
+def create_conformal_local_detection(dims, sa_state_id, max_x=1920, max_y=1080):
+    cls, x, y, w, h = dims
+    orig_x, orig_w = float(x) * max_x, float(w) * max_x
+    orig_y, orig_h = float(y) * max_y, float(h) * max_y
+
+    orig_center_x, orig_center_y = (orig_x + orig_w / 2), (orig_y + orig_h / 2)
+    
+    # normalize between 100 and -100
+    rel_center_y = (orig_center_x / max_x) * 100 - 100
+
+    rel_fixed_x = 300
+
+    return (rel_fixed_x, rel_center_y)
 
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
@@ -171,13 +195,13 @@ def agent_action(sensing_agent, layer, screen=None):
     r,t = sensing_agent.tracker_query()
     sensing_agent.reposition(r,t)
     # agent_update(sensing_agent)
-    curr_pt, pred_pt = sensing_agent.estimate_next_detection()
+    curr_pt, pred_pt = (), ()
+    arr = sensing_agent.estimate_next_detection()
+    if len(arr):
+        curr_pt = arr[0][0]
+        pred_pt = arr[0][1]
     if screen != None:
-        pafn.clear_frame(screen)
         if len(pred_pt):
             pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"])
             pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"])
             pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
-
-        draw_sensing_agent(screen, sensing_agent)
-        pygame.display.update()
