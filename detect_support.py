@@ -201,7 +201,10 @@ def agent_action(sensing_agent, layer, screen=None):
         curr_pt = arr[0][0]
         pred_pt = arr[0][1]
     if screen != None:
+        pafn.clear_frame(screen)
         if len(pred_pt):
             pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"])
             pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"])
             pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
+        draw_sensing_agent(screen, sensing_agent)
+        pygame.display.update()
