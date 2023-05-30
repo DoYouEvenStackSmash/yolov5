@@ -136,7 +136,7 @@ def init_sensing_agent(
 
     sensing_agent.exoskeleton = rb
     sensing_agent.exoskeleton.states = []
-    sensor.fov_radius = 500
+    sensor.fov_radius = 300
     sensing_agent.centered_sensor = sensor
     sensing_agent.obj_tracker = ObjectTrackManager()
     sensing_agent.obj_tracker.linked_tracks = []
@@ -146,6 +146,7 @@ def init_sensing_agent(
 
     sensing_agent.obj_tracker.parent_agent = sensing_agent
     sensing_agent._id = _id
+    sensing_agent.ALLOW_TRANSLATION=False
     # rotation = sensing_agent.rotate_agent(orientation)
     return sensing_agent
 
