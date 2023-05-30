@@ -132,11 +132,11 @@ def init_sensing_agent(
         rigid_link=ap,
     )
     sensor = Sensor(parent_agent=sensing_agent)
-    sensor.fov_width = np.pi / 4
+    sensor.fov_width = 3 * np.pi / 5
 
     sensing_agent.exoskeleton = rb
     sensing_agent.exoskeleton.states = []
-    sensor.fov_radius = 300
+    sensor.fov_radius = 200
     sensing_agent.centered_sensor = sensor
     sensing_agent.obj_tracker = ObjectTrackManager()
     sensing_agent.obj_tracker.linked_tracks = []
@@ -188,7 +188,7 @@ def create_conformal_local_detection(dims, sa_state_id, max_x=1920, max_y=1080):
 
     rel_fixed_x = 300
 
-    return (50, rel_center_y)
+    return (100, rel_center_y)
 
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
