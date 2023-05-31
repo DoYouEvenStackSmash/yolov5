@@ -35,22 +35,15 @@ from render_support import PygameArtFxns as pafn
 from render_support import GeometryFxns as gfn
 from render_support import MathFxns as mfn
 from render_support import TransformFxns as tfn
-from support.transform_polygon import *
-from support.Polygon import *
-from support.Link import Link
+
+from env_init import *
+
+from drawing_functions import *
+
+from support.file_loader import *
 
 import collections
 
-from YoloBox import YoloBox
-from StreamingObjectTrackManager import ObjectTrackManager
-from ObjectTrack import ObjectTrack
-from AnnotationLoader import AnnotationLoader as al
-from StreamingAnnotations import StreamingAnnotations as sann
-from RigidBody import RigidBody
-from SensingAgent import SensingAgent
-from Sensor import Sensor
-from Target import Target
-from Environment import Environment
 import json
 
 import argparse
@@ -135,7 +128,7 @@ def run(
     screen = pafn.create_display(1000, 1000)
     pafn.clear_frame(screen)
     identifier = "Agent_A"
-    sensing_agent = init_sensing_agent(SensingAgent(), (500, 500), identifier)
+    sensing_agent = init_sensing_agent(_id=identifier)
     # rospy.init_node('jackal_velocity_controller')
     # pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
@@ -214,6 +207,7 @@ def run(
         for i, det in enumerate(pred):  # per image
             sensing_agent.heartbeat()
             curr_state = sensing_agent.exoskeleton.get_age()
+            range_query = get_range()
 
             seen += 1
             if webcam:  # batch_size >= 1
@@ -257,9 +251,18 @@ def run(
                             (cls, *xywh, conf) if save_conf else (cls, *xywh)
                         )  # label format
                         dims = (("%g " * len(line)).rstrip() % line).split()
+                        cls, x, y, w, h = dims
+                        x,y,w,h = float(x), float(y), float(w), float(h)
+                        img_shape_x, img_shape_y = im.shape[2:]
+                        detection = None
+                        if range_query != None:
+                            detection = create_detection_with_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x, img_shape_y, range_query, sensing_agent.get_fov_width())
+                        else:
+                            detection = create_detection_without_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x, img_shape_y, sensing_agent.get_fov_width())
+
+
+                        layer.append(detection)
                         
-                        layer.append(mock_coordinate_transform(sensing_agent, dims, curr_state))
-                        # cls, x, y, w, h = dims
 
                         # # with open(f'{txt_path}.txt', 'a') as f:
                         # #     f.write(('%g ' * len(line)).rstrip() % line + '\n')
@@ -279,11 +282,10 @@ def run(
                             file=save_dir / "crops" / names[c] / f"{p.stem}.jpg",
                             BGR=True,
                         )
-                agent_action(sensing_agent, layer, screen)
+            agent_action(sensing_agent, layer, screen)
                 # generic debugging for agent detection and drive
                 # DOES NOT MODIFY STATE
 
-                counter += 1
             # Stream results
             im0 = annotator.result()
             if view_img:

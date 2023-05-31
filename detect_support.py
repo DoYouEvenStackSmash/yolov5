@@ -66,6 +66,9 @@ def do_rel_detection(sensing_agent):
 
 
 def publish_rotation(radians):
+    """
+    placeholder for publish of angular geometry/twist
+    """
     if POSE_ROTATE_ADJUST_FLAG:
         ## do rotation publish
         # gen_twist
@@ -73,6 +76,9 @@ def publish_rotation(radians):
 
 
 def publish_translation(distance):
+    """
+    placeholder for publish of linear geometry/twist
+    """
     if POSE_TRANSLATE_ADJUST_FLAG:
         ##do translation publish
         # gen_twist
@@ -80,8 +86,17 @@ def publish_translation(distance):
 
 
 def get_odometry_update():
-    print("odometry_update_here")
+    """
+    placeholder for odometry query
+    """
+    pass
 
+def get_range():
+    """
+    placeholder for range query
+    """
+    return None
+    pass
 
 def agent_update(sensing_agent):
     """
@@ -109,90 +124,67 @@ def agent_update(sensing_agent):
         sensing_agent.obj_tracker.add_linear_displacement(-translation, 0)
 
 
-def init_sensing_agent(
-    sensing_agent=SensingAgent(), origin=(0, 0), _id=0, orientation=(0, 0)
-):
-    ox, oy = origin
-    scale = 2
-    opts = [
-        (ox - 10 * scale, oy - 10 * scale),
-        (ox - 10 * scale, oy + 10 * scale),
-        (ox + 30 * scale, oy),
-    ]
-    # print(opts)
+def create_detection_with_range(sensor_origin, time_of_detection, detection_cls, x, y, w, h, range_to_target, img_shape_x, img_shape_y, sensor_fov_width):
+  """
+  Creates a detection when a range component is present
+  """
+  # compute position
+  center_x = img_shape_x / 2
+  det_center_x = img_shape_x * x + (w * img_shape_x) / 2
 
-    mpt = gfn.get_midpoint(opts[0], opts[1])
-    mpt2 = gfn.get_midpoint(mpt, opts[2])
-    ap = Polygon(opts)
-    rb = RigidBody(
-        parent_agent=sensing_agent,
-        ref_origin=mpt,
-        ref_center=mpt2,
-        endpoint=opts[2],
-        rigid_link=ap,
-    )
-    sensor = Sensor(parent_agent=sensing_agent)
-    sensor.fov_width = 3 * np.pi / 5
+  theta = mfn.euclidean_dist((center_x,0), (det_center_x,0)) / img_shape_x * sensor_fov_width
+  r = range_to_target
 
-    sensing_agent.exoskeleton = rb
-    sensing_agent.exoskeleton.states = []
-    sensor.fov_radius = 200
-    sensing_agent.centered_sensor = sensor
-    sensing_agent.obj_tracker = ObjectTrackManager()
-    sensing_agent.obj_tracker.linked_tracks = []
-    sensing_agent.obj_tracker.layers = []
-    sensing_agent.obj_tracker.trackmap = []
-    sensing_agent.obj_tracker.global_track_store = {}
+  detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
+  posn = Position(detection_coord[0], detection_coord[1])
 
-    sensing_agent.obj_tracker.parent_agent = sensing_agent
-    sensing_agent._id = _id
-    sensing_agent.ALLOW_TRANSLATION=False
-    # rotation = sensing_agent.rotate_agent(orientation)
-    return sensing_agent
+  # compute yolobox
+  sensor_theta, sensor_range_to_target = mfn.car2pol(sensor_origin, detection_coord)
+  ratio = sensor_theta / sensor_fov_width
+  sensor_x = sensor_fov_width * ratio + 50
+  sensor_y = sensor_range_to_target
+  sensor_w = w * img_shape_x
+  sensor_h = h * img_shape_y
 
+  sensor_bbox = [sensor_x, sensor_y, sensor_w, sensor_h]
+  yb = sann.register_annotation(detection_cls, sensor_bbox, time_of_detection)
 
-def create_conformal_yolobox(dims, sa_state_id, max_x=1920, max_y=1080):
-    rel_max_x = 100
-    rel_fixed_y = 50
-    cls, x, y, w, h = dims
-    orig_x, orig_w = float(x) * max_x, float(w) * max_x
-    orig_y, orig_h = float(y) * max_y, float(h) * max_y
+  # create detection
+  det = Detection(posn, yb)
+  return det
 
-    orig_center_x, orig_center_y = (orig_x + orig_w / 2), (orig_y + orig_h / 2)
+def create_detection_without_range(sensor_origin, time_of_detection, detection_cls, x, y, w, h, img_shape_x, img_shape_y, sensor_fov_width):
+    """
+    Creates a detection when range is not present
+    """
+    center_x = img_shape_x / 2
+    det_center_x = img_shape_x * x + (w * img_shape_x) / 2
 
-    rel_center_x = (orig_center_x / max_x) * 100
-    bbox = [rel_center_x, rel_fixed_y, 1, 1]
-    
-    conformal_yolobox = sann.register_annotation(0, bbox, sa_state_id)
-    return conformal_yolobox
+    fixed_range = 100
+    range_to_target = fixed_range
+    theta = mfn.euclidean_dist((center_x,0), (det_center_x,0)) / img_shape_x * sensor_fov_width
 
-def mock_coordinate_transform(sensing_agent, dims, sa_state_id, max_x=1920, max_y=1080):
-    val = create_conformal_local_detection(dims, sa_state_id)
-   
-    dc = sensing_agent.transform_to_local_sensor_coord((0, 0), (val[0], val[1]))
-    
-    bbox = [dc[0], dc[1], 1, 1]
-    yb = sann.register_annotation(dims[0], bbox, sa_state_id)
-    posn = Position(val[0], val[1])
-    return Detection(posn, yb)
+    detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
+    posn = Position(detection_coord[0], detection_coord[1])
 
-def create_conformal_local_detection(dims, sa_state_id, max_x=1920, max_y=1080):
-    cls, x, y, w, h = dims
-    orig_x, orig_w = float(x) * max_x, float(w) * max_x
-    orig_y, orig_h = float(y) * max_y, float(h) * max_y
+    ratio = theta / sensor_fov_width
 
-    orig_center_x, orig_center_y = (orig_x + orig_w / 2), (orig_y + orig_h / 2)
-    
-    # normalize between 100 and -100
-    rel_center_y = (orig_center_x / max_x) * 100 - 100
+    sensor_x = sensor_fov_width * ratio + 50
+    sensor_y = fixed_range
+    sensor_w = w * img_shape_x
+    sensor_h = h * img_shape_y
 
-    rel_fixed_x = 300
+    sensor_bbox = [sensor_x, sensor_y, sensor_w, sensor_h]
+    yb = sann.register_annotation(detection_cls, sensor_bbox, time_of_detection)
 
-    return (100, rel_center_y)
+    # create detection
+    det = Detection(posn, yb)
+    return det
 
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
     sensing_agent.obj_tracker.process_layer(-1)
+
     r,t = sensing_agent.tracker_query()
     sensing_agent.reposition(r,t)
     # agent_update(sensing_agent)
