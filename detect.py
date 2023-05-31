@@ -125,10 +125,10 @@ def run(
     vid_stride=1,  # video frame-rate stride
 ):
     # sensing_agent = sa_setup()
-    screen = pafn.create_display(600, 600)
+    screen = pafn.create_display(1000, 1000)
     pafn.clear_frame(screen)
     identifier = "Agent_A"
-    sensing_agent = init_sensing_agent(_id=identifier,origin=(300,300),width=3 * np.pi / 5,radius=200)
+    sensing_agent = init_sensing_agent(_id=identifier,origin=(500,500),width=3 * np.pi / 5,radius=200)
     sensing_agent.ALLOW_TRANSLATION = False
     # rospy.init_node('jackal_velocity_controller')
     # pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
