@@ -157,29 +157,15 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     """
     Creates a detection when range is not present
     """
-    center_x = img_shape_x / 2
-    det_center_x = (img_shape_x * x) + (w * img_shape_x) / 2
 
-    fixed_range = 100
-    range_to_target = fixed_range
-    rel_y = (det_center_x / center_x) * 100 - 100
-    # theta = mfn.euclidean_dist((center_x,0), (det_center_x,0)) / img_shape_x * sensor_fov_width
+    rel_X = (x * img_shape_x + (w * img_shape_x) / 2 - (img_shape_x / 2)) / img_shape_x * 100 + 50
+    rel_y = 100
+    bbox = [rel_x, rel_y, w, h]
+    theta = (rel_x / 100) * sensor_fov_width - (sensor_fov_width / 2)
+    det_posn = mfn.pol2car((0,0), 100, theta)
 
-    # detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
-    detection_coord = (100, rel_y)
-    print(detection_coord)
-    posn = Position(100, rel_y)
-    sensor_coord = sensing_agent.transform_to_local_sensor_coord((0,0), detection_coord)
-
-    sensor_x = sensor_coord[0]
-    sensor_y = sensor_coord[1]
-    sensor_w = w * img_shape_x
-    sensor_h = h * img_shape_y
-
-    sensor_bbox = [sensor_x, sensor_y, sensor_w, sensor_h]
-    yb = sann.register_annotation(detection_cls, sensor_bbox, time_of_detection)
-
-    # create detection
+    posn = Position(det_posn[0], det_posn[1])
+    yb = sann.register_annotation(detection_cls, bbox, time_of_detection)
     det = Detection(posn, yb)
     return det
 
