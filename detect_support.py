@@ -184,7 +184,7 @@ def create_detection_without_range(sensor_origin, time_of_detection, detection_c
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
     sensing_agent.obj_tracker.process_layer(-1)
-
+    sensing_agent.heartbeat()
     r,t = sensing_agent.tracker_query()
     sensing_agent.reposition(r,t)
     # agent_update(sensing_agent)
@@ -195,8 +195,8 @@ def agent_action(sensing_agent, layer, screen=None):
         pred_pt = arr[0][1]
     if screen != None:
         pafn.clear_frame(screen)
+        pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"], 0, 8)
         if len(pred_pt):
-            pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"], 0, 8)
             pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"], 0, 8)
             pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
         draw_sensing_agent(screen, sensing_agent)

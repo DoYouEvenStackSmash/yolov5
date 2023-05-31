@@ -206,7 +206,7 @@ def run(
         # Process predictions
 
         for i, det in enumerate(pred):  # per image
-            sensing_agent.heartbeat()
+            # sensing_agent.heartbeat()
             curr_state = sensing_agent.exoskeleton.get_age()
             range_query = get_range()
 
@@ -260,7 +260,7 @@ def run(
                         if range_query != None:
                             detection = create_detection_with_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x, img_shape_y, range_query, sensing_agent.get_fov_width())
                         else:
-                            detection = create_detection_without_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x, img_shape_y, sensing_agent.get_fov_width())
+                            detection = create_detection_without_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x=1920, img_shape_y=1080, sensing_agent.get_fov_width())
 
 
                         layer.append(detection)
