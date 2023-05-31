@@ -153,7 +153,7 @@ def create_detection_with_range(sensor_origin, time_of_detection, detection_cls,
   det = Detection(posn, yb)
   return det
 
-def create_detection_without_range(sensor_origin, time_of_detection, detection_cls, x, y, w, h, img_shape_x, img_shape_y, sensor_fov_width):
+def create_detection_without_range(sensing_agent, sensor_origin, time_of_detection, detection_cls, x, y, w, h, img_shape_x, img_shape_y, sensor_fov_width):
     """
     Creates a detection when range is not present
     """
@@ -166,11 +166,11 @@ def create_detection_without_range(sensor_origin, time_of_detection, detection_c
 
     detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
     posn = Position(detection_coord[0], detection_coord[1])
+    
+    sensor_coord = sensing_agent.transform_to_local_sensor_coord((0,0), detection_coord)
 
-    ratio = theta / sensor_fov_width
-
-    sensor_x = Sensor.WINDOW_WIDTH * ratio + 50
-    sensor_y = range_to_target
+    sensor_x = sensor_coord[0]
+    sensor_y = sensor_coord[1]
     sensor_w = w * img_shape_x
     sensor_h = h * img_shape_y
 
