@@ -284,7 +284,7 @@ def run(
                             file=save_dir / "crops" / names[c] / f"{p.stem}.jpg",
                             BGR=True,
                         )
-                agent_action(sensing_agent, layer, screen)
+            agent_action(sensing_agent, layer, screen)
                 # generic debugging for agent detection and drive
                 # DOES NOT MODIFY STATE
 
