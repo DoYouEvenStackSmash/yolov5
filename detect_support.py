@@ -162,7 +162,7 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     rel_y = 100
     bbox = [rel_x, rel_y, w, h]
     theta = (rel_x / 100) * sensor_fov_width - (sensor_fov_width / 2)
-    det_posn = mfn.pol2car((0,0), 100, theta)
+    det_posn = mfn.pol2car((50,0), 100, theta)
 
     posn = Position(det_posn[0], det_posn[1])
     yb = sann.register_annotation(detection_cls, bbox, time_of_detection)
