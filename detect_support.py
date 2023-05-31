@@ -186,7 +186,7 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
 def agent_action(sensing_agent, layer, screen=None):
     sensing_agent.obj_tracker.add_new_layer(layer)
     sensing_agent.obj_tracker.process_layer(-1)
-    sensing_agent.heartbeat()
+
     r,t = sensing_agent.tracker_query()
     sensing_agent.reposition(r,t)
     # agent_update(sensing_agent)

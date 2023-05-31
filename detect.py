@@ -206,7 +206,7 @@ def run(
         # Process predictions
 
         for i, det in enumerate(pred):  # per image
-            # sensing_agent.heartbeat()
+            sensing_agent.heartbeat()
             curr_state = sensing_agent.exoskeleton.get_age()
             range_query = get_range()
 
