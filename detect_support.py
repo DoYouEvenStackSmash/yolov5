@@ -158,17 +158,18 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     Creates a detection when range is not present
     """
     center_x = img_shape_x / 2
-    det_center_x = img_shape_x * x + (w * img_shape_x) / 2
+    det_center_x = (img_shape_x * x) + (w * img_shape_x) / 2
 
     fixed_range = 100
     range_to_target = fixed_range
-    rel_y = (det_center_x / img_shape_x) * 100 - 100
+    rel_y = (det_center_x / img_shape_x) * 100 - 110
     # theta = mfn.euclidean_dist((center_x,0), (det_center_x,0)) / img_shape_x * sensor_fov_width
 
     # detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
     detection_coord = (100, rel_y)
+    print(rel_y)
+    print(detection_coord)
     posn = Position(100, rel_y)
-    
     sensor_coord = sensing_agent.transform_to_local_sensor_coord((0,0), detection_coord)
 
     sensor_x = sensor_coord[0]
