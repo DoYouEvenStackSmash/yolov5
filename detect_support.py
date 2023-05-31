@@ -157,9 +157,8 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     """
     Creates a detection when range is not present
     """
-    #(w * img_shape_x) / 2
+
     rel_x = (x * img_shape_x - (img_shape_x / 2)) / img_shape_x * 100 + 50
-    print(f"x val: {x}")
     rel_y = 100
     bbox = [rel_x, rel_y, w, h]
     theta = (rel_x / 100) * sensor_fov_width - (sensor_fov_width / 2)
