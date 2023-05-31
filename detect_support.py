@@ -195,7 +195,8 @@ def agent_action(sensing_agent, layer, screen=None):
         pred_pt = arr[0][1]
     if screen != None:
         pafn.clear_frame(screen)
-        pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"], 0, 8)
+        if len(curr_pt):
+            pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"], 0, 8)
         if len(pred_pt):
             pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"], 0, 8)
             pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
