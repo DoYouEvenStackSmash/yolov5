@@ -128,7 +128,7 @@ def run(
     screen = pafn.create_display(600, 600)
     pafn.clear_frame(screen)
     identifier = "Agent_A"
-    sensing_agent = init_sensing_agent(_id=identifier,origin=(275,275),width=3 * np.pi / 5,radius=300)
+    sensing_agent = init_sensing_agent(_id=identifier,origin=(300,300),width=3 * np.pi / 5,radius=200)
     sensing_agent.ALLOW_TRANSLATION = False
     # rospy.init_node('jackal_velocity_controller')
     # pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
