@@ -260,7 +260,7 @@ def run(
                         if range_query != None:
                             detection = create_detection_with_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, img_shape_x, img_shape_y, range_query, sensing_agent.get_fov_width())
                         else:
-                            detection = create_detection_without_range(sensing_agent.get_center(), curr_state, cls, x, y, w, h, 1920, 1080, sensing_agent.get_fov_width())
+                            detection = create_detection_without_range(sensing_agent, sensing_agent.get_center(), curr_state, cls, x, y, w, h, 1920, 1080, sensing_agent.get_fov_width())
 
 
                         layer.append(detection)
