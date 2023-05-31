@@ -162,7 +162,7 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
 
     fixed_range = 100
     range_to_target = fixed_range
-    rel_y = (det_center_x / img_shape_x) * 100 - 110
+    rel_y = (det_center_x / img_shape_x) * 100 #- 110
     # theta = mfn.euclidean_dist((center_x,0), (det_center_x,0)) / img_shape_x * sensor_fov_width
 
     # detection_coord = mfn.pol2car(sensor_origin, range_to_target, theta)
