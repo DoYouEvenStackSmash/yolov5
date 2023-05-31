@@ -4,7 +4,7 @@ from drawing_functions import *
 
 POSE_ADJUST_FLAG = False
 POSE_TRANSLATE_ADJUST_FLAG = False
-POSE_ROTATE_ADJUST_FLAG = False
+POSE_ROTATE_ADJUST_FLAG = True
 
 
 def gen_twist(direction=None):
@@ -196,8 +196,8 @@ def agent_action(sensing_agent, layer, screen=None):
     if screen != None:
         pafn.clear_frame(screen)
         if len(pred_pt):
-            pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"])
-            pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"])
+            pafn.frame_draw_dot(screen, curr_pt, pafn.colors["tangerine"], 0, 8)
+            pafn.frame_draw_dot(screen, pred_pt, pafn.colors["yellow"], 0, 8)
             pafn.frame_draw_line(screen, (curr_pt, pred_pt), pafn.colors["white"])
         draw_sensing_agent(screen, sensing_agent)
         pygame.display.update()

@@ -128,7 +128,7 @@ def run(
     screen = pafn.create_display(600, 600)
     pafn.clear_frame(screen)
     identifier = "Agent_A"
-    sensing_agent = init_sensing_agent(_id=identifier,origin=(275,275))
+    sensing_agent = init_sensing_agent(_id=identifier,origin=(275,275),width=3 * np.pi / 5,radius=300)
     sensing_agent.ALLOW_TRANSLATION = False
     # rospy.init_node('jackal_velocity_controller')
     # pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
@@ -284,7 +284,7 @@ def run(
                             file=save_dir / "crops" / names[c] / f"{p.stem}.jpg",
                             BGR=True,
                         )
-            agent_action(sensing_agent, layer, screen)
+                agent_action(sensing_agent, layer, screen)
                 # generic debugging for agent detection and drive
                 # DOES NOT MODIFY STATE
 
