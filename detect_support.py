@@ -169,8 +169,8 @@ def create_detection_without_range(sensor_origin, time_of_detection, detection_c
 
     ratio = theta / sensor_fov_width
 
-    sensor_x = sensor_fov_width * ratio + 50
-    sensor_y = fixed_range
+    sensor_x = Sensor.WINDOW_WIDTH * ratio + 50
+    sensor_y = range_to_target
     sensor_w = w * img_shape_x
     sensor_h = h * img_shape_y
 
