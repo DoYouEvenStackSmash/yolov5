@@ -109,7 +109,7 @@ def agent_update(sensing_agent, ALLOW_MOVEMENT=False):
     
     initial_trajectory = None
     new_trajectory = None
-    if movements == True:
+    if ALLOW_MOVEMENT == True:
         # get initial trajectory
         initial_trajectory = get_odometry_update()
         
