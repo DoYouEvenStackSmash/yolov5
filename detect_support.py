@@ -28,10 +28,6 @@ def gen_twist(rotation=None, translation=None):
     # generate translation message
     if translation != None:
         pass
-        # twist.linear.x = 0.0
-        # twist.linear.y = 0.0
-        # twist.linear.z = 0.0
-
 
     return twist
 
@@ -80,6 +76,7 @@ def publish_movement(twist_msg):
     """
     placeholder for movement publishing
     """
+    pub.publish(twist_msg)
     pass
 
 def get_odometry_update():
