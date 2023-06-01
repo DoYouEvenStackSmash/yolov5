@@ -11,6 +11,10 @@ try:
 except:
     pass
 
+# direction flags for gen_twist
+DIRECTION = -1
+MAGNITUDE = 1
+
 POSE_ADJUST_FLAG = False
 POSE_TRANSLATE_ADJUST_FLAG = False
 POSE_ROTATE_ADJUST_FLAG = True
@@ -32,7 +36,7 @@ def gen_twist(rotation=None, translation=None):
 
     # generate rotation message
     if rotation != None:
-        twist.angular.z = rotation
+        twist.angular.z = DIRECTION * MAGNITUDE * rotation
     
     # generate translation message
     if translation != None:
