@@ -2,6 +2,15 @@
 from SensingAgent import *
 from drawing_functions import *
 
+## to publish twist msgs to the agent ##
+try:
+    import rospy
+    from geometry_msgs.msg import Twist
+    rospy.init_node('jackal_velocity_controller')
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+except:
+    pass
+
 POSE_ADJUST_FLAG = False
 POSE_TRANSLATE_ADJUST_FLAG = False
 POSE_ROTATE_ADJUST_FLAG = True
