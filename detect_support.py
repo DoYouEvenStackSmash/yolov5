@@ -7,21 +7,32 @@ POSE_TRANSLATE_ADJUST_FLAG = False
 POSE_ROTATE_ADJUST_FLAG = True
 
 
-def gen_twist(direction=None):
+def gen_twist(rotation=None, translation=None):
     """
     Translates a direction to a movement command
     """
     twist = Twist()
+    
+    # initialize twist
     twist.linear.x = 0.0
     twist.linear.y = 0.0
     twist.linear.z = 0.0
     twist.angular.x = 0.0
     twist.angular.y = 0.0
     twist.angular.z = 0.0
-    if direction == "LEFT":
-        twist.angular.z = 0.5
-    elif direction == "RIGHT":
-        twist.angular.z = -0.5
+
+    # generate rotation message
+    if rotation != None:
+        twist.angular.z = rotation
+    
+    # generate translation message
+    if translation != None:
+        pass
+        # twist.linear.x = 0.0
+        # twist.linear.y = 0.0
+        # twist.linear.z = 0.0
+
+
     return twist
 
 
@@ -65,25 +76,11 @@ def do_rel_detection(sensing_agent):
             drive((500, 500), pred_pt)
 
 
-def publish_rotation(radians):
+def publish_movement(twist_msg):
     """
-    placeholder for publish of angular geometry/twist
+    placeholder for movement publishing
     """
-    if POSE_ROTATE_ADJUST_FLAG:
-        ## do rotation publish
-        # gen_twist
-        pass
-
-
-def publish_translation(distance):
-    """
-    placeholder for publish of linear geometry/twist
-    """
-    if POSE_TRANSLATE_ADJUST_FLAG:
-        ##do translation publish
-        # gen_twist
-        pass
-
+    pass
 
 def get_odometry_update():
     """
@@ -98,30 +95,32 @@ def get_range():
     return None
     pass
 
-def agent_update(sensing_agent):
+def agent_update(sensing_agent, ALLOW_MOVEMENT=False):
     """
     Updates the pose of a single agent
     """
-    est_rotation, est_translation = sensing_agent.estimate_pose_update()
+    est_rotation,est_translation = sensing_agent.tracker_query()
+    
+    initial_trajectory = None
+    new_trajectory = None
+    if movements == True:
+        # get initial trajectory
+        initial_trajectory = get_odometry_update()
+        
+        # build movement message
+        twist_msg = gen_twist(est_rotation, est_translation)
 
-    if est_rotation != None:
-        print(f"estimated (degrees): {est_rotation * 180 / np.pi}")
-        return
-        ###
-        publish_rotation(est_rotation)
-        get_odometry_update()
-        ###
-        rotation = sensing_agent.apply_rotation_to_agent(est_rotation)
-        sensing_agent.obj_tracker.add_angular_displacement(0, -est_rotation)
-        sensing_agent.exoskeleton.rel_theta += rotation
+        # send movement message to agent over rospy
+        publish_movement(twist_msg)
+        
+        # get new trajectory
+        new_trajectory = get_odometry_update()
+    
+        # placeholder for measuring trajectory delta
+        pass
 
-    if est_translation != None:
-        ###
-        publish_translation(est_translation)
-        get_odometry_update()
-        ###
-        translation = sensing_agent.apply_translation_to_agent(est_translation)
-        sensing_agent.obj_tracker.add_linear_displacement(-translation, 0)
+    # reposition the simulated agent
+    sensing_agent.reposition(est_rotation,est_translation)
 
 
 def create_detection_with_range(sensor_origin, time_of_detection, detection_cls, x, y, w, h, range_to_target, img_shape_x, img_shape_y, sensor_fov_width):
@@ -157,7 +156,6 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     """
     Creates a detection when range is not present
     """
-
     rel_x = (x * img_shape_x - (img_shape_x / 2)) / img_shape_x * 100 + 50
     rel_y = 100
     bbox = [rel_x, rel_y, w, h]
@@ -170,12 +168,13 @@ def create_detection_without_range(sensing_agent, sensor_origin, time_of_detecti
     return det
 
 def agent_action(sensing_agent, layer, screen=None):
+    """
+    mounting point for agent object detection interactions
+    """
     sensing_agent.obj_tracker.add_new_layer(layer)
     sensing_agent.obj_tracker.process_layer(-1)
 
-    r,t = sensing_agent.tracker_query()
-    sensing_agent.reposition(r,t)
-    # agent_update(sensing_agent)
+    agent_update(sensing_agent)
     curr_pt, pred_pt = (), ()
     arr = sensing_agent.estimate_next_detection()
     if len(arr):
